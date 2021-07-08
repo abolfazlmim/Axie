@@ -1,0 +1,658 @@
+<!--
+    Copyright 2018 freakitties@gmail.com
+    You can copy and use this code if you agree to pay $1 per page load.
+-->
+<html>
+    <head>
+        <title>Real-time Axie New Auctions</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-116189657-1"></script>
+        <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-116189657-1');
+        </script>
+        <!--web3 v0.20.6-->
+        <script src="/js/web3.min.js" integrity="sha384-rXHfd7f1o1jpr3t+dYI17CkzUY3Wswo1OGbiXPGSbg4s2E42+jkRgllwt7ss2Vlq"></script>
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" integrity="sha384-1UXhfqyOyO+W+XsGhiIFwwD3hsaHRz2XDGMle3b8bXPH5+cMsXVShDoHA3AH/y/p" crossorigin="anonymous">
+        <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js" integrity="sha384-Z9D45cp3elqajO+xEyjRTIK1Gr3eYsXiyCPIKNog1sIQzpo2fqFDqFdADGiJjzOv" crossorigin="anonymous"></script>
+        <style>
+            .dropdown-menu>li>a, .dropdown-menu {
+                color: white;
+                background-color: #6c757d;
+            }
+            .btn-plant, .btn-plant:hover, .btn-plant:active, .btn-plant:visited {
+                background-color: rgb(108, 192, 0) !important;
+                border-color: rgb(108, 192, 0) !important;
+            }
+            .btn-reptile, .btn-reptile:hover, .btn-reptile:active, .btn-reptile:visited {
+                background-color: rgb(200, 138, 224) !important;
+                border-color: rgb(200, 138, 224) !important;
+            }
+            .btn-beast, .btn-beast:hover, .btn-beast:active, .btn-beast:visited {
+                background-color: rgb(255, 184, 18) !important;
+                border-color: rgb(255, 184, 18) !important;
+            }
+            .btn-aquatic, .btn-aquatic:hover, .btn-aquatic:active, .btn-aquatic:visited {
+                background-color: rgb(0, 184, 206) !important;
+                border-color: rgb(0, 184, 206) !important;
+            }
+            .btn-bird, .btn-bird:hover, .btn-bird:active, .btn-bird:visited {
+                background-color: rgb(255, 139, 189) !important;
+                border-color: rgb(255, 139, 189) !important;
+            }
+            .btn-bug, .btn-bug:hover, .btn-bug:active, .btn-bug:visited {
+                background-color: rgb(255, 83, 65) !important;
+                border-color: rgb(255, 83, 65) !important;
+            }
+            .plant-circle {
+                background-color: rgb(108, 192, 0);
+                border: 1px solid #333;
+                height: 20px;
+                width: 20px;
+                justify-content: center;
+                align-items: center;
+                border-radius: 50%;
+                text-align: center;
+                display: flex;
+            }
+            .reptile-circle {
+                background-color: rgb(200, 138, 224);
+                border: 1px solid #333;
+                height: 20px;
+                width: 20px;
+                justify-content: center;
+                align-items: center;
+                border-radius: 50%;
+                text-align: center;
+                display: flex;
+            }
+            .beast-circle {
+                background-color: rgb(255, 184, 18);
+                border: 1px solid #333;
+                height: 20px;
+                width: 20px;
+                justify-content: center;
+                align-items: center;
+                border-radius: 50%;
+                text-align: center;
+                display: flex;
+            }
+            .aquatic-circle {
+                background-color: rgb(0, 184, 206);
+                border: 1px solid #333;
+                height: 20px;
+                width: 20px;
+                justify-content: center;
+                align-items: center;
+                border-radius: 50%;
+                text-align: center;
+                display: flex;
+            }
+            .bird-circle {
+                background-color: rgb(255, 139, 189);
+                border: 1px solid #333;
+                height: 20px;
+                width: 20px;
+                justify-content: center;
+                align-items: center;
+                border-radius: 50%;
+                text-align: center;
+                display: flex;
+            }
+            .bug-circle {
+                background-color: rgb(255, 83, 65);
+                border: 1px solid #333;
+                height: 20px;
+                width: 20px;
+                justify-content: center;
+                align-items: center;
+                border-radius: 50%;
+                text-align: center;
+                display: flex;
+            }
+        </style>
+    </head>
+
+<script>
+    const MAX_ROWS = 1000;
+    const BLOCKS_PER_DAY = 60/15 * 60 * 24;
+    const NUM_HISTORIC_BLOCKS = BLOCKS_PER_DAY * 2;    //2 Days
+
+    var coreAddress = '0xf5b0a3efb8e8e4c201e2a935f110eaaf3ffecb8d';
+    var auctionAddress = '0xf4985070ce32b6b1994329df787d1acc9a2dd9e2';
+    var auctionABI = [{"constant":false,"inputs":[{"name":"_nftAddress","type":"address"},{"name":"_tokenId","type":"uint256"}],"name":"cancelAuctionWhenPaused","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"unpause","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"},{"name":"","type":"uint256"}],"name":"auctions","outputs":[{"name":"seller","type":"address"},{"name":"startingPrice","type":"uint128"},{"name":"endingPrice","type":"uint128"},{"name":"duration","type":"uint64"},{"name":"startedAt","type":"uint64"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_nftAddress","type":"address"},{"name":"_tokenId","type":"uint256"}],"name":"bid","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":true,"inputs":[],"name":"paused","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"_nftAddress","type":"address"},{"name":"_tokenId","type":"uint256"}],"name":"getCurrentPrice","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"_nftAddress","type":"address"},{"name":"_tokenId","type":"uint256"}],"name":"getAuction","outputs":[{"name":"seller","type":"address"},{"name":"startingPrice","type":"uint256"},{"name":"endingPrice","type":"uint256"},{"name":"duration","type":"uint256"},{"name":"startedAt","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"ownerCut","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"pause","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_nftAddress","type":"address"},{"name":"_tokenId","type":"uint256"}],"name":"cancelAuction","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_nftAddress","type":"address"},{"name":"_tokenId","type":"uint256"},{"name":"_startingPrice","type":"uint256"},{"name":"_endingPrice","type":"uint256"},{"name":"_duration","type":"uint256"}],"name":"createAuction","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"reclaimEther","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"inputs":[{"name":"_ownerCut","type":"uint256"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"payable":false,"stateMutability":"nonpayable","type":"fallback"},{"anonymous":false,"inputs":[{"indexed":true,"name":"_nftAddress","type":"address"},{"indexed":true,"name":"_tokenId","type":"uint256"},{"indexed":false,"name":"_startingPrice","type":"uint256"},{"indexed":false,"name":"_endingPrice","type":"uint256"},{"indexed":false,"name":"_duration","type":"uint256"},{"indexed":false,"name":"_seller","type":"address"}],"name":"AuctionCreated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"_nftAddress","type":"address"},{"indexed":true,"name":"_tokenId","type":"uint256"},{"indexed":false,"name":"_totalPrice","type":"uint256"},{"indexed":false,"name":"_winner","type":"address"}],"name":"AuctionSuccessful","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"_nftAddress","type":"address"},{"indexed":true,"name":"_tokenId","type":"uint256"}],"name":"AuctionCancelled","type":"event"},{"anonymous":false,"inputs":[],"name":"Pause","type":"event"},{"anonymous":false,"inputs":[],"name":"Unpause","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"previousOwner","type":"address"},{"indexed":true,"name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"}];
+
+
+    if (window.speechSynthesis) {
+        var synth = window.speechSynthesis;
+        var utterThis = new SpeechSynthesisUtterance("New axi auction.");
+        synth.onvoiceschanged = function() {
+            utterThis.voice = synth.getVoices()[17];
+        };
+    }
+
+    var axieTable;
+
+    function cancelAuction(id, blockNumber) {
+        axieTable.rows().every( function ( rowIdx, tableLoop, rowLoop ) {
+            var data = this.data();
+            if (data[1] == id && !(data[0] instanceof Array) && blockNumber > data[data.length - 2]) {
+
+                data[0] = [data[0], "CANCELED"];
+                /*
+                for (let i in data) {
+                    data[i] = "<s>" + data[i] + "</s>";
+                }
+                */
+                this.invalidate().draw();
+            }
+        } );
+    }
+
+    function sucessfulAuction(id, blockNumber) {
+        axieTable.rows().every( function ( rowIdx, tableLoop, rowLoop ) {
+            var data = this.data();
+            if (data[1] == id && !(data[0] instanceof Array) && blockNumber > data[data.length - 2]) {
+                data[0] = [data[0], "SOLD"];
+                /*
+                for (let i in data) {
+                    data[i] = "<s>" + data[i] + "</s>";
+                }
+                */
+                this.invalidate().draw();
+            }
+        } );
+    }
+
+    function bidOnSale(axieId) {
+        auctionInstance.getCurrentPrice(coreAddress, axieId, function(error, result) {
+            if (error) {
+                console.log("Error getting price: " + error);
+                alert(error);
+                return;
+            }
+            let currentPrice = result;
+            if (currentPrice == 0) {
+                alert("Couldn't get the current auction price. Maybe it sold?");
+                return;
+            }
+            //currentPrice = currentPrice.div(1e18).round(4).mul(1e18);
+            bidPrice = currentPrice.add(500000000000000); //0.0005. Lazy way to account for potential increasing auction. Overbids get refunded
+            auctionInstance.bid(coreAddress, axieId, {from: web3.eth.accounts[0], value: bidPrice, gas: 235655}, (error, result) => {
+                if (error) {
+                    console.log("Error bidding: " + error);
+                    //alert("Error bidding: " + error);
+                    return;
+                }
+                console.log("Bid result: " + result);
+            });
+        });
+    }
+
+    function renderDate(data, type, row, meta) {
+        if (data instanceof Date) {
+            if (type == "display") {
+                return data.toLocaleString();
+            } else {
+                return data;
+            }
+        }
+        //array
+        if (data instanceof Array) {
+            if (type == "display") {
+                    return data[0].toLocaleString() + " " + data[1];
+            } else {
+                    return data[0];
+            }
+        }
+        return data;
+    }
+
+    function renderTag(data, type, row, meta) {
+        if (data == null) {
+            return "-";
+        } else if (data.startsWith("O")) {
+            return "O";
+        } else if (data == "MEO Corp") {
+            return "M";
+        } else if (data == "MEO Corp II") {
+            return "M2";
+        }
+        return "?";
+    }
+
+    function renderAxie(data, type, row, meta) {
+        if (type == "display") {
+            let axieID = parseInt(data);
+            if (!axieID) {
+                console.log("bad data?? " + data);
+                return '<a href="https://axieinfinity.com/axie/' + data + '?r=freak" target="_blank">' + data + '</a><br/>';
+            }
+            let color = "btn-";
+            if (["plant","reptile","beast","aquatic","bird","bug"].includes(row[row.length - 1].class)) {
+                color += row[row.length - 1].class;
+            } else {
+                color += "primary";
+            }
+
+            return '<a href="https://axieinfinity.com/axie/' + axieID + '?r=freak" target="_blank">' + axieID + '</a><br/><button class="mt-1 text-white btn btn-sm ' + color + '" +  onclick="bidOnSale(' + axieID + ')">Buy now</button>';
+        }
+        return data;
+    }
+
+    function renderPureness(data, type, row, meta) {
+        if (row[pureColumn] instanceof Array) {
+            let numBeast = 0;
+            let numAquatic = 0;
+            let numPlant = 0;
+            let numBird = 0;
+            let numBug = 0;
+            let numReptile = 0;
+            for (let i in row[pureColumn]) {
+                switch (row[pureColumn][i].class) {
+                    case "beast":
+                        numBeast++;
+                        break;
+                    case "aquatic":
+                        numAquatic++;
+                        break;
+                    case "plant":
+                        numPlant++;
+                        break;
+                    case "bird":
+                        numBird++;
+                        break;
+                    case "bug":
+                        numBug++;
+                        break;
+                    case "reptile":
+                        numReptile++;
+                        break;
+                }
+            }
+
+            let out = '<div class="row"><span class="beast-circle">' + numBeast + '</span>' +
+            '<span class="aquatic-circle">' + numAquatic + '</span>' +
+            '<span class="plant-circle">' + numPlant + '</span>' +
+            '<span class="bird-circle">' + numBird + '</span>' +
+            '<span class="bug-circle">' + numBug + '</span>' +
+            '<span class="reptile-circle">' + numReptile + '</span></div>';
+
+            return out;
+        }
+        return 0;
+    }
+
+    function renderMystics(data, type, row, meta) {
+        if (data instanceof Array) {
+            let count = 0;
+            for (let i in data) {
+                if (data[i].mystic) {
+                    count++;
+                }
+            }
+            return count;
+        }
+        return 0;
+    }
+
+    function renderStage(data, type, row, meta) {
+        if (type == "display") {
+            switch(data) {
+                case 4:
+                    return "Adult";
+                case 3:
+                    return "Petite";
+                case 2:
+                    return "Larva";
+                case 1:
+                    return "Egg";
+                default:
+                    return "Unknown";
+            }
+        }
+        return data;
+    }
+
+    function renderSeller(data, type, row, meta) {
+        try {
+            let account = JSON.parse(data);
+            if(web3.isAddress(account) && accounts.hasOwnProperty(account)) {
+                account = JSON.parse(accounts[account]);
+            }
+            return '<a href="https://axieinfinity.com/profile/' + weakEscape(account.address) + '?r=freak" target="_blank">' + weakEscape(account.name) + '</a>';
+        } catch(e) {
+            let trunc = data.slice(0, 12);
+            return '<a href="https://axieinfinity.com/profile/' + data + '?r=freak" target="_blank">' + trunc + '...</a>';
+        }
+    }
+
+    function weakEscape(str) {
+        return str.replace(/'/g, "&apos;").replace(/"/g, "&quot;").replace(/</g, '&lt;').replace(/>/g, "&gt;");
+    }
+
+
+    var startingBlock;
+    var blocksBack = NUM_HISTORIC_BLOCKS;
+    var cleared = false;
+    var eventsInitialized = false;
+    var BigNumber;
+    var pureColumn;
+
+    $(document).ready(async function() {
+        // Modern dapp browsers...
+        if (window.ethereum) {
+            window.web3 = new Web3(ethereum);
+            BigNumber = web3.BigNumber;
+            try {
+                // Request account access if needed
+                await ethereum.enable();
+                console.log("modern dapp browser");
+            } catch (error) {
+                // User denied account access...
+                console.log("User denied ethereum account access.")
+            }
+        }
+        // Legacy dapp browsers...
+        else if (window.web3) {
+            window.web3 = new Web3(web3.currentProvider);
+            BigNumber = web3.BigNumber;
+            // Acccounts always exposed
+            console.log("legacy dapp browser");
+        }
+        // Non-dapp browsers...
+        else {
+            console.log('Non-Ethereum browser detected.');
+            //since we are using our own web3.min.js
+            let w3 = new Web3();
+            BigNumber = w3.BigNumber;
+        }
+
+        $.ajax({
+            url: "../header.html",
+            cache: false,
+            dataType: "html",
+            success: function(data) {
+                $("#headerDiv").html(data);
+            }
+        });
+        if (typeof web3 == 'undefined') {
+            document.write("web3 not detected. Are you using a web3 enabled browser like MetaMask?");
+        }
+
+        pureColumn = 6;     //update this when columns change
+        axieTable = $('#auctionTable').DataTable({
+            order: [[ 0, "desc" ]],
+            columns: [
+                {title: "Date Time", render: renderDate, type: "date" },
+                {title: "Axie", render: renderAxie},
+                {title: "Tag", render: renderTag},
+                {title: "Exp"},
+                {title: "Breeds"},
+                {title: "Stage", render: renderStage},
+                {title: "Mystics", render: renderMystics},
+                {title: "Purenesss", render: renderPureness, sortable: false},
+                {title: "Starting Price"},
+                {title: "Ending Price"},
+                {title: "Duration", render:
+                function(data, type, row, meta) { if (type == "sort") return data; if (data == "") return ""; if (data > 24) {return (data/24.0).toFixed(1) + " days"} else {return data + " hours"}}, type: "num" },
+                {title: "Seller", render: renderSeller},
+                {title: "Block Number", visible: false},
+                {title: "Axie", visible: false},
+            ],
+            pageLength: 50,
+            searching: false,
+            "columnDefs": [
+                { className: "text-center", "targets": [1, 2, 3, 4, 5, 6, 7] },
+                //{ "width": "10%", "targets": 5 }
+            ]
+        });
+
+        auctionContract = web3.eth.contract(auctionABI);
+        auctionInstance = auctionContract.at(auctionAddress);
+        auctionInstance.owner(function(error, result) {console.log(result.toString())});
+
+        var hash = window.location.hash.substr(1);
+        if (hash.indexOf("noHistory") != -1) {
+            blocksBack = 0;
+        }
+        web3.eth.getBlockNumber((error, result) => {
+            if (error) {
+                alert(error);
+                return;
+            }
+            startingBlock = result;
+            var fromBlock = startingBlock - blocksBack;
+            console.log("Starting to watch Auction Contract - AuctionCreated at block :" + fromBlock);
+            auctionInstance.AuctionCreated({}, {fromBlock: fromBlock}, function(error, result) {
+                if (error) {
+                    console.log("ERROR in AuctionCreated " + JSON.stringify(error));
+                }
+                console.log("New Auction " + JSON.stringify(result));
+                if (result.blockNumber <= startingBlock) {
+                    processEvents(error, result, false);
+                    //hacky way to start watching these events only after AuctionCreated have been checked
+                    if (result.blockNumber > startingBlock - BLOCKS_PER_DAY && !eventsInitialized) {
+                        eventsInitialized = true;
+                        var intID = setInterval(function() {
+                            clearInterval(intID);
+                            console.log("Starting to watch Auction Contract - AuctionCancelled at block :" + fromBlock);
+                            auctionInstance.AuctionCancelled({}, {fromBlock: fromBlock}, function(error, result) {
+                                if (error) {
+                                    console.log("ERROR in AuctionCancelled " + JSON.stringify(error));
+                                }
+                                console.log("Auction cancelled: " + result['args']['_tokenId'] + " " + result.blockNumber);
+                                cancelAuction(result['args']['_tokenId'], result.blockNumber);
+                            });
+
+                            console.log("Starting to watch Auction Contract - AuctionSuccessful at block :" + fromBlock);
+                            auctionInstance.AuctionSuccessful({}, {fromBlock: fromBlock}, function(error, result) {
+                                if (error) {
+                                    console.log("ERROR in AuctionSuccessful " + JSON.stringify(error));
+                                }
+                                console.log("Auction AuctionSuccessful: " + result['args']['_tokenId'] + " " + result.blockNumber);
+                                sucessfulAuction(result['args']['_tokenId'], result.blockNumber);
+                            });
+                        }, 3000);
+                    }
+                } else {
+                    processEvents(error, result, true);
+                }
+            });
+        });
+
+
+          /*
+  event AuctionSuccessful(
+    address indexed _nftAddress,
+    uint256 indexed _tokenId,
+    uint256 _totalPrice,
+    address _winner
+  );          */
+
+    });
+
+    function addRow(id, tag, exp, breedCount, stage, parts, startPrice, endPrice, duration, seller, date, blockNumber, axie) {
+        axieTable.row.add( [
+            date,
+            id,
+            tag,
+            exp,
+            breedCount,
+            stage,
+            parts,
+            null,
+            startPrice,
+            endPrice,
+            duration,
+            seller,
+            blockNumber,
+            axie
+        ] );
+        axieTable.columns.adjust().draw();
+
+        let numRows = axieTable.rows().count();
+        if (numRows > MAX_ROWS) {
+            axieTable.rows(':last').remove().draw();
+        }
+    }
+
+    accounts = {};
+    added = [];
+    axies = new Set();
+    function addAxie(id, startPrice, endPrice, duration, seller, date, blockNumber) {
+
+        id = parseInt(id);
+        startPrice = parseInt(startPrice);
+        endPrice = parseInt(endPrice);
+        duration = parseInt(duration);
+        seller = web3.isAddress(seller) ? seller : "Bad Address";
+        if (!(date instanceof Date)) {
+            date = new Date(date);
+        }
+        blockNumber = parseInt(blockNumber);
+
+        //duplicate detection from dupe events (reorgs)
+        ignoreAxie = added.find(function(axie) {
+            return axie.blockNumber == blockNumber && axie.id == id && startPrice == axie.startPrice && axie.endPrice == endPrice;// && Math.abs(date.getTime() - axie.date.getTime()) < 180000;
+        });
+
+        if (ignoreAxie) {
+            return;
+        }
+        added.push({id: id, blockNumber: blockNumber, date: date, startPrice: startPrice});
+        if (!axies.has(id) || blockNumber > startingBlock) {    //refresh axies after startingBlock
+            axies.add(id);
+            $.get("https://axieinfinity.com/api/axies/" + id, function(data) {
+                let axie = data;
+                if (!accounts.hasOwnProperty(seller)) {
+                    accounts[seller] = seller;  //default to seller and set key before request
+                    $.get("https://api.axieinfinity.com/v1/battle/accounts/" + seller, function(account) {
+                        accounts[seller] = account;
+                        addRow(id, axie.title, axie.exp ? axie.exp : 0, axie.breedCount, axie.stage, axie.parts, startPrice/1e18, endPrice/1e18, duration, account, date, blockNumber, axie);
+                    }).fail(function(e) {
+                        addRow(id, axie.title, axie.exp ? axie.exp : 0, axie.breedCount, axie.stage, axie.parts, startPrice/1e18, endPrice/1e18, duration, seller, date, blockNumber, axie);
+                    })
+                } else {
+                    let addInt = setInterval(function() {
+                        clearInterval(addInt);
+                        addRow(id, axie.title, axie.exp ? axie.exp : 0, axie.breedCount, axie.stage, axie.parts, startPrice/1e18, endPrice/1e18, duration, accounts[seller], date, blockNumber, axie);
+                    }, 1000);
+                }
+            });
+        }
+    }
+
+    var lastUttered = new Date().getTime() / 1000;
+    alerted = false;
+    function processEvents(error, result, sound = true) {
+        if (error) {
+            console.log("AUCTION ERROR: " + error);
+            if (!alerted) {
+                alert("AUCTION ERROR: " + error);
+                alerted = true;
+                return;
+            }
+        }
+
+        var id = parseInt(result['args']['_tokenId']);
+        var startPrice = parseInt(result['args']['_startingPrice']);
+        var endPrice = parseInt(result['args']['_endingPrice']);
+        var duration = parseInt(result['args']['_duration']);
+        var seller = web3.isAddress(result['args']['_seller']) ? result['args']['_seller'] : "";
+        console.log("New Auction for Axie ID: " + id + ", start price: " + startPrice/1e18 + ", end price: " + endPrice/1e18 + ", duration: " + duration + ", seller: " + seller + ", blockNumber: " + result.blockNumber);
+
+        if (!cleared) {
+            axieTable.row(0).remove();
+            cleared = true;
+        }
+        let blockNumber = result.blockNumber;
+        web3.eth.getBlock(blockNumber, (error, result) => {
+            if (error) {
+                alert(error);
+                return;
+            }
+            if (result == null) {
+                //happens when infura servers lagged?
+                console.log("null block? " + JSON.stringify(result));
+                addAxie(id, startPrice, endPrice, duration/60/60, seller, new Date(), blockNumber);
+            } else {
+                addAxie(id, startPrice, endPrice, duration/60/60, seller, new Date(result.timestamp * 1000), blockNumber);
+            }
+            let hash = window.location.hash.substr(1);
+            if (hash.indexOf("noAudio") != -1 || sound == false) {
+                return;
+            }
+
+            let now = new Date().getTime() / 1000;
+            if (now > lastUttered + 3) {
+                if (window.speechSynthesis) {
+                    lastUttered = now;
+                    synth.speak(utterThis);
+                } else {
+                    let audio = new Audio('/sounds/droplet.mp3');
+                    audio.play();
+                }
+            }
+        });
+    }
+
+</script>
+    <!-- header -->
+    <div id="headerDiv"></div>
+    <br/>
+<div class="container">
+  <!--<table class="table table-striped table-responsive" id="auctionTable">-->
+    <table class="table table-striped" id="auctionTable">
+    <thead>
+      <tr>
+        <th scope="col">Date Time</th>
+        <th scope="col">Axie</th>
+        <th scope="col">Tag</th>
+        <th scope="col">Exp</th>
+        <th scope="col">Breeds</th>
+        <th scope="col">Mystics</th>
+        <th scope="col">Pureness</th>
+        <th scope="col">Stage</th>
+        <th scope="col">Starting Price</th>
+        <th scope="col">Ending Price</th>
+        <th scope="col">Duration</th>
+        <th scope="col">Seller</th>
+        <th scope="col">Block Number</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <tr>
+        <td id="nodatayet">No new data yet. Waiting to scan the blockchain.</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<br/><br/><br/><br/><br/><br/><br/><br/>
+<footer class="page-footer font-small">
+    <div class="container">
+        <div class="row col-md-10">
+                <div class="col-md text-center"><a href="#noAudio" onclick="window.location.reload(true);">No audio</a></div>
+                <div class="col-md text-center"><a href="" onclick="window.location.reload(true);">Enable audio</a></div>
+        </div>
+    </div>
+</footer>
+<br/>
+</html>
